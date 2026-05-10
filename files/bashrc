@@ -55,5 +55,5 @@ shopt -s histappend
 shopt -s checkwinsize
 
 # Make "**" in a pathname expansion context match all files
-# and zero or more directories and subdirectories.
-shopt -s globstar
+# and zero or more directories and subdirectories when supported.
+shopt -s globstar 2>/dev/null || true
