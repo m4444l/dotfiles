@@ -1,12 +1,1 @@
-if type brew > /dev/null; then
-  brew_cmd="brew"
-elif [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
-  brew_cmd="/home/linuxbrew/.linuxbrew/bin/brew"
-fi
-
-if [ -n "$brew_cmd" ]; then
-  eval "$($brew_cmd shellenv zsh)"
-fi
-if type mise > /dev/null; then
-  eval "$(mise activate zsh --shims)"
-fi
+[ -f "$HOME/.profile" ] && source "$HOME/.profile"

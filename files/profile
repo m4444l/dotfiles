@@ -1,0 +1,22 @@
+if [ -n "$ZSH_VERSION" ]; then
+  profile_shell="zsh"
+elif [ -n "$BASH_VERSION" ]; then
+  profile_shell="bash"
+else
+  profile_shell="sh"
+fi
+
+if type brew > /dev/null 2>&1; then
+  brew_cmd="brew"
+elif [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
+  brew_cmd="/home/linuxbrew/.linuxbrew/bin/brew"
+fi
+
+if [ -n "$brew_cmd" ]; then
+  eval "$($brew_cmd shellenv "$profile_shell")"
+fi
+if [ "$profile_shell" != "sh" ] && type mise > /dev/null 2>&1; then
+  eval "$(mise activate "$profile_shell" --shims)"
+fi
+
+unset brew_cmd profile_shell
