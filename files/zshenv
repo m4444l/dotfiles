@@ -10,7 +10,5 @@ if [[ ! -o interactive ]]; then
   . "$HOME/.shell-helpers.sh"
   activate_brew zsh
   path_prepend_if_exists "$HOME/.local/bin"
-  if type mise > /dev/null 2>&1; then
-    eval "$(mise activate zsh --shims)"
-  fi
+  activate_mise_shims zsh
 fi

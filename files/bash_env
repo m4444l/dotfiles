@@ -4,6 +4,4 @@
 . "$HOME/.shell-helpers.sh"
 activate_brew bash
 path_prepend_if_exists "$HOME/.local/bin"
-if type mise > /dev/null 2>&1; then
-  eval "$(mise activate bash --shims)"
-fi
+activate_mise_shims bash

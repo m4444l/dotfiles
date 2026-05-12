@@ -1,1 +1,8 @@
-[ -f "$HOME/.profile" ] && source "$HOME/.profile"
+. "$HOME/.shell-helpers.sh"
+
+activate_brew zsh
+
+if [[ ! -o interactive ]]; then
+  path_prepend_if_exists "$HOME/.local/bin"
+  activate_mise_shims zsh
+fi

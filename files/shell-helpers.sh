@@ -16,12 +16,40 @@ select_editor() {
   fi
 }
 
+# Add an existing directory to the front of PATH, moving it if it is already present.
 path_prepend_if_exists() {
   if [ -d "$1" ]; then
-    case ":$PATH:" in
-      *":$1:"*) ;;
-      *) export PATH="$1:$PATH" ;;
-    esac
+    path_dir=$1
+    path_rest=$PATH
+    path_new=
+
+    while :; do
+      case "$path_rest" in
+        *:*)
+          path_part=${path_rest%%:*}
+          path_rest=${path_rest#*:}
+          ;;
+        *)
+          path_part=$path_rest
+          path_rest=
+          ;;
+      esac
+
+      if [ "$path_part" != "$path_dir" ] && [ -n "$path_part" ]; then
+        if [ -n "$path_new" ]; then
+          path_new="$path_new:$path_part"
+        else
+          path_new=$path_part
+        fi
+      fi
+
+      if [ -z "$path_rest" ]; then
+        break
+      fi
+    done
+
+    export PATH="$path_dir${path_new:+:$path_new}"
+    unset path_dir path_rest path_new path_part
   fi
 }
 
@@ -40,5 +68,12 @@ activate_brew() {
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv "$@")"
   elif type brew > /dev/null 2>&1; then
     eval "$(brew shellenv "$@")"
+  fi
+}
+
+activate_mise_shims() {
+  if type mise > /dev/null 2>&1; then
+    eval "$(mise activate "$1" --shims)"
+    path_prepend_if_exists "${MISE_DATA_DIR:-$HOME/.local/share/mise}/shims"
   fi
 }

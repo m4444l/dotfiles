@@ -1,5 +1,11 @@
-[ -f "$HOME/.profile" ] && source "$HOME/.profile"
+# Make non-interactive bash children load mise/brew via ~/.bash_env.
+export BASH_ENV="$HOME/.bash_env"
+
+. "$HOME/.shell-helpers.sh"
+
+activate_brew bash
+activate_mise_shims bash
 
 case $- in
-  *i*) [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc" ;;
+  *i*) [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc" ;;
 esac
