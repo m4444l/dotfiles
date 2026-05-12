@@ -20,13 +20,20 @@ class Link < Thor
   option :force, type: :boolean, default: false, desc: "Overwrite existing files or symlinks"
   def link
     require "fileutils"
+    require "find"
+    require "set"
+
     root = File.join(__dir__, "files")
-    process(root, root)
+    broken_symlinks = Set.new
+
+    process(root, root, broken_symlinks)
+    find_broken_home_symlinks(root, broken_symlinks)
+    find_broken_symlinks(root, target_dirs(root), broken_symlinks)
   end
 
   private
 
-    def process(dir, root)
+    def process(dir, root, broken_symlinks)
       same_dir = dir == root
 
       Dir
@@ -36,7 +43,7 @@ class Link < Thor
         full_path = File.join(dir, file)
 
         if File.directory?(full_path)
-          process(full_path, root)
+          process(full_path, root, broken_symlinks)
           next
         end
 
@@ -66,6 +73,11 @@ class Link < Thor
         end
 
         if File.exist?(target) || File.symlink?(target)
+          if broken_symlink?(target)
+            broken_symlinks << target
+            say "Found broken symlink #{target} -> #{File.readlink(target)}", :red
+          end
+
           if options[:dry_run]
             action = options[:force] ? "force remove" : "skip"
             say "Would #{action} #{target} (already exists)", :blue
@@ -88,6 +100,67 @@ class Link < Thor
           say "Linked #{full_path} -> #{target}", :green
         end
       end
+    end
+
+    def target_dirs(root)
+      Dir
+        .glob(File.join(root, "**", "*"), File::FNM_DOTMATCH)
+        .reject { _1.end_with?("/.") || _1.end_with?("/..") }
+        .select { File.file?(_1) || File.symlink?(_1) }
+        .map { File.dirname(target_for(_1, root)) }
+        .reject { _1 == ENV["HOME"] }
+        .uniq
+    end
+
+    def find_broken_home_symlinks(root, already_reported)
+      Dir
+        .children(ENV["HOME"])
+        .map { File.join(ENV["HOME"], _1) }
+        .each do |path|
+        next unless broken_symlink?(path)
+        next if already_reported.include?(path)
+        next unless link_points_into?(path, root)
+
+        say "Found broken symlink #{path} -> #{File.readlink(path)}", :red
+        already_reported << path
+      end
+    end
+
+    def find_broken_symlinks(root, dirs, already_reported)
+      dirs
+        .select { Dir.exist?(_1) }
+        .each do |dir|
+        Find.find(dir, ignore_error: true) do |path|
+          Find.prune if File.directory?(path) && File.symlink?(path)
+          next unless broken_symlink?(path)
+          next if already_reported.include?(path)
+          next unless link_points_into?(path, root)
+
+          say "Found broken symlink #{path} -> #{File.readlink(path)}", :red
+          already_reported << path
+        end
+      end
+    end
+
+    def broken_symlink?(path)
+      File.symlink?(path) && !File.exist?(path)
+    end
+
+    def link_points_into?(path, root)
+      destination = File.readlink(path)
+      expanded =
+        if destination.start_with?("/")
+          destination
+        else
+          File.expand_path(destination, File.dirname(path))
+        end
+
+      expanded == root || expanded.start_with?("#{root}/")
+    end
+
+    def target_for(path, root)
+      relative_path = path.delete_prefix(root).delete_prefix("/")
+      File.join(ENV["HOME"], ".#{relative_path}")
     end
 end
 
