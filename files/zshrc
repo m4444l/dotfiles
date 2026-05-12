@@ -85,7 +85,7 @@ fi
 WORDCHARS=${WORDCHARS//[\.\/\-_]}
 
 # https://twitter.com/rockatanescu/status/1609518828882628609
-RUBY_YJIT_ENABLE=1
+export RUBY_YJIT_ENABLE=1
 
 # Must be called after compinit
 if type zoxide > /dev/null; then

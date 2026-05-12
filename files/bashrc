@@ -38,7 +38,7 @@ if [[ "$(uname)" == 'Darwin' ]]; then
 fi
 
 # https://twitter.com/rockatanescu/status/1609518828882628609
-RUBY_YJIT_ENABLE=1
+export RUBY_YJIT_ENABLE=1
 
 # Don't add duplicate lines in the history.
 HISTCONTROL=ignoredups
