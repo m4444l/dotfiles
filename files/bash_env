@@ -1,0 +1,9 @@
+# Sourced by non-interactive bash when BASH_ENV points here. Interactive bash
+# ignores BASH_ENV and uses .bash_profile/.bashrc instead.
+
+. "$HOME/.shell-helpers.sh"
+activate_brew bash
+path_prepend_if_exists "$HOME/.local/bin"
+if type mise > /dev/null 2>&1; then
+  eval "$(mise activate bash --shims)"
+fi

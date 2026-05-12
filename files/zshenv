@@ -1,0 +1,16 @@
+# Sourced for every zsh invocation (interactive, non-interactive, login).
+# Activate mise with shims for non-interactive shells (scripts, cron, GUI
+# launchers like Spotlight/Alfred). Interactive shells skip this and use
+# hook-based activation from .zshrc instead.
+
+# Make non-interactive bash children load mise/brew via ~/.bash_env.
+export BASH_ENV="$HOME/.bash_env"
+
+if [[ ! -o interactive ]]; then
+  . "$HOME/.shell-helpers.sh"
+  activate_brew zsh
+  path_prepend_if_exists "$HOME/.local/bin"
+  if type mise > /dev/null 2>&1; then
+    eval "$(mise activate zsh --shims)"
+  fi
+fi

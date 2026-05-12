@@ -1,22 +1,18 @@
+# Sourced from .zprofile (zsh login) and .bash_profile (bash login).
+# Not expected to be sourced from POSIX sh.
+
+# Make non-interactive bash children load mise/brew via ~/.bash_env.
+export BASH_ENV="$HOME/.bash_env"
+
+. "$HOME/.shell-helpers.sh"
+
 if [ -n "$ZSH_VERSION" ]; then
-  profile_shell="zsh"
-elif [ -n "$BASH_VERSION" ]; then
-  profile_shell="bash"
+  # Zsh handles mise itself: shims in .zshenv (non-interactive), hooks in
+  # .zshrc (interactive).
+  activate_brew zsh
 else
-  profile_shell="sh"
+  activate_brew bash
+  if type mise > /dev/null 2>&1; then
+    eval "$(mise activate bash --shims)"
+  fi
 fi
-
-if type brew > /dev/null 2>&1; then
-  brew_cmd="brew"
-elif [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
-  brew_cmd="/home/linuxbrew/.linuxbrew/bin/brew"
-fi
-
-if [ -n "$brew_cmd" ]; then
-  eval "$($brew_cmd shellenv "$profile_shell")"
-fi
-if [ "$profile_shell" != "sh" ] && type mise > /dev/null 2>&1; then
-  eval "$(mise activate "$profile_shell" --shims)"
-fi
-
-unset brew_cmd profile_shell
