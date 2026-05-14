@@ -76,10 +76,10 @@ status_line = ["model-with-reasoning", "git-branch", "run-state", "context-remai
 [hooks.state]
 
 [hooks.state."/Users/manuel/.codex/hooks.json:session_start:0:0"]
-trusted_hash = "sha256:74b060cf1e4a87a6c92187da85f9660b5d3d95ff0559c0c66ffe3b88a823afb2"
+trusted_hash = "sha256:4db41c2b23ca913ddc5cbdfb7e5c0a7899d315be016a813352977cb5fdf488e1"
 
 [hooks.state."/Users/manuel/.codex/hooks.json:stop:0:0"]
-trusted_hash = "sha256:ed55dacef42f2cf7224de6bcf756c97ae6c55c3ef2c50fd20f846c99f2c2de4d"
+trusted_hash = "sha256:f3145e5f05c5d21de6b62898299ca95f15f404f1296af39183c5ff16720b3aa9"
 
 [hooks.state."/Users/manuel/.codex/hooks.json:user_prompt_submit:0:0"]
-trusted_hash = "sha256:57041ac1bb0b24a3c7a185991b1295c2ddfa8f343210f6b6642c0f4565062f44"
+trusted_hash = "sha256:4902a3c7b29a49570814ca9509cc31c613cc8e0723d5afe298573504b5330c26"

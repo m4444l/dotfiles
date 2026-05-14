@@ -11,7 +11,11 @@
   work is done, save them in the project root, and mention the filenames in
   your "done" message.
 
-## Gems
+## Shell
+
+Never use `rm -rf`; use `trash` instead.
+
+## Rubygems
 
 Never modify the code of installed gems, especially baseline. Before making any changes to baseline (or any gem), check the app's `Gemfile`:
 

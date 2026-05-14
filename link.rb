@@ -38,6 +38,7 @@ class Link < Thor
 
       Dir
         .children(dir)
+        .sort
         .each do |entry|
 
         full_path = File.join(dir, entry)
@@ -117,6 +118,7 @@ class Link < Thor
     def collect_target_dirs(dir, root)
       Dir
         .children(dir)
+        .sort
         .flat_map do |entry|
 
         full_path = File.join(dir, entry)
