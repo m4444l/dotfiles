@@ -5,6 +5,7 @@ Notes for agents (and humans) working on this dotfiles repo.
 ## Repo layout
 
 - `files/` — every file/directory here is symlinked into `$HOME` as `.<name>` by `link.rb`. Subdirectories nest (e.g. `files/config/git/allowed_signers` becomes `~/.config/git/allowed_signers`).
+- Directories prefixed with `@` are symlinked as a whole folder instead of being recursed into; the `@` is stripped from the target name (e.g. `files/@agents` becomes `~/.agents` as a folder symlink). Use this when contents change often and you don't want to rerun `link.rb` after every addition.
 - `link.rb` — Thor script. `./link.rb` to create missing symlinks, `./link.rb --force` to repoint existing ones, `./link.rb --dry-run` to preview. Requires Ruby ≥ 3.0; the shebang resolves to system ruby 2.6, so invoke as `mise exec -- ruby ./link.rb`.
 
 ## Shell setup overview

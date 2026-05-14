@@ -38,78 +38,112 @@ class Link < Thor
 
       Dir
         .children(dir)
-        .each do |file|
+        .each do |entry|
 
-        full_path = File.join(dir, file)
+        full_path = File.join(dir, entry)
 
         if File.directory?(full_path)
-          process(full_path, root, broken_symlinks)
+          if entry.start_with?("@")
+            link_entry(full_path, entry.delete_prefix("@"), dir, root, same_dir, broken_symlinks)
+          else
+            process(full_path, root, broken_symlinks)
+          end
           next
         end
 
-        target_file =
-          same_dir ?
-            file :
-            dir
-              .delete_prefix(root)
-              .delete_prefix("/")
-              .then { File.join(_1, file) }
+        link_entry(full_path, entry, dir, root, same_dir, broken_symlinks)
+      end
+    end
 
-        target     = File.join(ENV["HOME"], ".#{target_file}")
-        target_dir = File.dirname(target)
+    def link_entry(source, target_name, dir, root, same_dir, broken_symlinks)
+      target_file =
+        same_dir ?
+          target_name :
+          dir
+            .delete_prefix(root)
+            .delete_prefix("/")
+            .then { File.join(_1, target_name) }
 
-        case
-        when same_dir
-          # No parent directories to create.
-        when Dir.exist?(target_dir)
-          if options[:dry_run]
-            say "Would skip #{target_dir} (already exists)", :yellow
-          end
-        when options[:dry_run]
-          say "Would create directory #{target_dir}", :blue
-        else
-          FileUtils.mkdir_p(target_dir)
-          say "Created directory #{target_dir}", :green
+      target     = File.join(ENV["HOME"], ".#{target_file}")
+      target_dir = File.dirname(target)
+
+      case
+      when same_dir
+        # No parent directories to create.
+      when Dir.exist?(target_dir)
+        if options[:dry_run]
+          say "Would skip #{target_dir} (already exists)", :yellow
         end
+      when options[:dry_run]
+        say "Would create directory #{target_dir}", :blue
+      else
+        FileUtils.mkdir_p(target_dir)
+        say "Created directory #{target_dir}", :green
+      end
 
-        if File.exist?(target) || File.symlink?(target)
-          if broken_symlink?(target)
-            broken_symlinks << target
-            say "Found broken symlink #{target} -> #{File.readlink(target)}", :red
-          end
-
-          if options[:dry_run]
-            action = options[:force] ? "force remove" : "skip"
-            say "Would #{action} #{target} (already exists)", :blue
-            next
-          end
-
-          unless options[:force]
-            say "Skipping #{target} (already exists)", :yellow
-            next
-          end
-
-          FileUtils.rm_f(target)
-          say "Removed #{target}", :yellow
+      if File.exist?(target) || File.symlink?(target)
+        if broken_symlink?(target)
+          broken_symlinks << target
+          say "Found broken symlink #{target} -> #{File.readlink(target)}", :red
         end
 
         if options[:dry_run]
-          say "Would link #{full_path} -> #{target}", :green
-        else
-          File.symlink(full_path, target)
-          say "Linked #{full_path} -> #{target}", :green
+          action = options[:force] ? "force remove" : "skip"
+          say "Would #{action} #{target} (already exists)", :blue
+          return
         end
+
+        unless options[:force]
+          say "Skipping #{target} (already exists)", :yellow
+          return
+        end
+
+        FileUtils.rm_f(target)
+        say "Removed #{target}", :yellow
+      end
+
+      if options[:dry_run]
+        say "Would link #{source} -> #{target}", :green
+      else
+        File.symlink(source, target)
+        say "Linked #{source} -> #{target}", :green
       end
     end
 
     def target_dirs(root)
+      collect_target_dirs(root, root).uniq
+    end
+
+    def collect_target_dirs(dir, root)
       Dir
-        .glob(File.join(root, "**", "*"), File::FNM_DOTMATCH)
-        .reject { _1.end_with?("/.") || _1.end_with?("/..") }
-        .select { File.file?(_1) || File.symlink?(_1) }
-        .map { File.dirname(target_for(_1, root)) }
-        .reject { _1 == ENV["HOME"] }
-        .uniq
+        .children(dir)
+        .flat_map do |entry|
+
+        full_path = File.join(dir, entry)
+
+        if File.directory?(full_path)
+          if entry.start_with?("@")
+            target_dir = File.dirname(target_for_at_dir(full_path, root))
+            (target_dir == ENV["HOME"] ? [] : [target_dir])
+          else
+            collect_target_dirs(full_path, root)
+          end
+        elsif File.file?(full_path) || File.symlink?(full_path)
+          target_dir = File.dirname(target_for(full_path, root))
+          (target_dir == ENV["HOME"] ? [] : [target_dir])
+        else
+          []
+        end
+      end
+    end
+
+    def target_for_at_dir(path, root)
+      relative_path = path
+        .delete_prefix(root)
+        .delete_prefix("/")
+        .then { File.join(File.dirname(_1), File.basename(_1).delete_prefix("@")) }
+        .delete_prefix("./")
+      File.join(ENV["HOME"], ".#{relative_path}")
     end
 
     def find_broken_home_symlinks(root, already_reported)
