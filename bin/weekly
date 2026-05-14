@@ -41,16 +41,50 @@ class Weekly < Thor
   desc "weekly", "weekly task (runs Fridays via GitHub Actions)"
   def weekly
     say "Weekly task ran at #{Time.now.utc.iso8601}"
-    update_playwright_cli_reference
-    download_playwright_cli_references
-    update_agent_browser_reference
-    download_agent_browser_references
-    download_agent_browser_templates
-    download_chrome_devtools_reference
-    download_anthropics_skill_creator
+
+    tasks = [
+      ["Playwright CLI skill reference", :update_playwright_cli_reference],
+      ["Playwright CLI references", :download_playwright_cli_references],
+      ["Agent Browser skill reference", :update_agent_browser_reference],
+      ["Agent Browser references", :download_agent_browser_references],
+      ["Agent Browser templates", :download_agent_browser_templates],
+      ["Chrome DevTools reference", :download_chrome_devtools_reference],
+      ["Anthropic skill creator", :download_anthropics_skill_creator],
+    ]
+
+    failures = []
+    tasks.each do |label, method_name|
+      run_task(label, method_name, failures)
+    end
+
+    report_failures(failures, tasks.count)
   end
 
   private
+
+    def run_task(label, method_name, failures)
+      say "Starting #{label}"
+      send(method_name)
+      say "Finished #{label}", :green
+    rescue StandardError => e
+      failures << [label, e]
+      say "Failed #{label}: #{e.class}: #{e.message}", :red
+      say e.backtrace.first(5).join("\n"), :red if e.backtrace
+    end
+
+    def report_failures(failures, task_count)
+      if failures.empty?
+        say "Weekly task completed successfully", :green
+        return
+      end
+
+      say "Weekly task completed with #{failures.count} failed task(s):", :yellow
+      failures.each do |label, error|
+        say "- #{label}: #{error.class}: #{error.message}", :yellow
+      end
+
+      raise "All weekly tasks failed" if failures.count == task_count
+    end
 
     def fetch(url, context: nil)
       response = HTTP.get(url)
