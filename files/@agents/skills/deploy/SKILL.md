@@ -5,7 +5,7 @@ description: Deploy an app via its deploy script with git safety checks. Use whe
 
 # Deploy
 
-You are deploying an app. Deployment is invoked via the project's deploy script (`bin/deploy` or `./deploy`), but several git safety checks must happen **before** that script runs. The order below matters — do not skip ahead.
+You are deploying an app. Deployment is invoked via the project's deploy script (`bin/deploy` or `./deploy.rb`), but several git safety checks must happen **before** that script runs. The order below matters — do not skip ahead.
 
 ## 1. Worktree check (always first)
 
@@ -33,7 +33,7 @@ If the primary checkout is currently on a branch other than `main`, stop and rep
 From the primary checkout, look for the deploy script in this order:
 
 1. `bin/deploy`
-2. `./deploy`
+2. `./deploy.rb`
 
 If neither exists (or exists but is not executable), abort and report — this app does not have a recognized deploy script and you should not improvise one.
 
@@ -66,12 +66,12 @@ Do not stash, commit, or otherwise touch uncommitted changes in the working tree
 
 ## 5. Run the deploy script
 
-From the primary checkout, run whichever script you found in step 2 (`bin/deploy` or `./deploy`). Stream its output to the user. If it exits non-zero, report the failure — don't try to clean up after it; the script's own stash-pop step is responsible for that.
+From the primary checkout, run whichever script you found in step 2 (`bin/deploy` or `./deploy.rb`). Stream its output to the user. If it exits non-zero, report the failure — don't try to clean up after it; the script's own stash-pop step is responsible for that.
 
 ## Report
 
 When the deploy script finishes successfully, report briefly:
 
-- Which script was run (`bin/deploy` or `./deploy`)
+- Which script was run (`bin/deploy` or `./deploy.rb`)
 - The primary checkout path it ran from
 - The commit SHA on `main` that was deployed
