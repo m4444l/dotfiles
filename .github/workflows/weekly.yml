@@ -1,0 +1,58 @@
+name: Weekly
+
+on:
+  schedule:
+    - cron: "0 10 * * 5"
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: Enable debugging with tmate
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  weekly:
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
+      - name: Debug with tmate
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug }}
+
+      - name: Run weekly script
+        run: bin/weekly
+
+      - name: Create pull request if changed
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: weekly/auto-updates
+          commit-message: "Weekly script updates"
+          title: "Weekly script updates"
+          body: "Automated updates from the weekly scheduled run."
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v3
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ":collision: *Dotfiles weekly workflow failed*"
+            blocks:
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: ":collision: *Dotfiles weekly workflow failed*\n:point_right: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Show run>"

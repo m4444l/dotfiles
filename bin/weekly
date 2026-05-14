@@ -1,0 +1,155 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/inline"
+require "fileutils"
+require "json"
+
+gemfile do
+  source "https://rubygems.org"
+  gem "thor"
+  gem "http"
+end
+
+PLAYWRIGHT_CLI_SKILL_URL = "https://raw.githubusercontent.com/microsoft/playwright-cli/refs/heads/main/skills/playwright-cli/SKILL.md"
+PLAYWRIGHT_CLI_REF = "files/@agents/skills/browser-automation/references/playwright-cli.md"
+PLAYWRIGHT_CLI_REFERENCES_API = "https://api.github.com/repos/microsoft/playwright-cli/contents/skills/playwright-cli/references"
+PLAYWRIGHT_CLI_REFERENCES_DIR = "files/@agents/skills/browser-automation/references/playwright-cli"
+
+AGENT_BROWSER_REPO = "vercel-labs/agent-browser"
+AGENT_BROWSER_SKILL_PATH = "skills/agent-browser/SKILL.md"
+AGENT_BROWSER_REF = "files/@agents/skills/browser-automation/references/agent-browser.md"
+AGENT_BROWSER_REFERENCES_API = "https://api.github.com/repos/vercel-labs/agent-browser/contents/skills/agent-browser/references"
+AGENT_BROWSER_REFERENCES_DIR = "files/@agents/skills/browser-automation/references/agent-browser"
+AGENT_BROWSER_TEMPLATES_API = "https://api.github.com/repos/vercel-labs/agent-browser/contents/skills/agent-browser/templates"
+AGENT_BROWSER_TEMPLATES_DIR = "files/@agents/skills/browser-automation/templates/agent-browser"
+
+CHROME_DEVTOOLS_REF_URL = "https://raw.githubusercontent.com/ChromeDevTools/chrome-devtools-mcp/refs/heads/main/docs/tool-reference.md"
+CHROME_DEVTOOLS_REF = "files/@agents/skills/browser-automation/references/chrome-devtools.md"
+
+ANTHROPICS_SKILL_CREATOR_REPO = "anthropics/skills"
+ANTHROPICS_SKILL_CREATOR_PATH = "skills/skill-creator"
+ANTHROPICS_SKILL_CREATOR_DIR = "files/@agents/skills/skill-creator"
+
+class Weekly < Thor
+  include Thor::Actions
+
+  default_command :weekly
+
+  def self.exit_on_failure? = true
+
+  desc "weekly", "weekly task (runs Fridays via GitHub Actions)"
+  def weekly
+    say "Weekly task ran at #{Time.now.utc.iso8601}"
+    update_playwright_cli_reference
+    download_playwright_cli_references
+    update_agent_browser_reference
+    download_agent_browser_references
+    download_agent_browser_templates
+    download_chrome_devtools_reference
+    download_anthropics_skill_creator
+  end
+
+  private
+
+    def fetch(url, context: nil)
+      response = HTTP.get(url)
+      unless response.status.success?
+        msg = context ? "HTTP failed fetching #{context}: #{response.status}" : "HTTP failed: #{response.status}"
+        raise msg
+      end
+      response.body.to_s
+    end
+
+    def strip_frontmatter(content)
+      content.sub(/\A---\n.*?\n---\n+/m, "")
+    end
+
+    def update_playwright_cli_reference
+      content = strip_frontmatter(fetch(PLAYWRIGHT_CLI_SKILL_URL))
+        .gsub(/([\[\(])references\//, '\1references/playwright-cli/')
+      FileUtils.mkdir_p(File.dirname(PLAYWRIGHT_CLI_REF))
+      File.write(PLAYWRIGHT_CLI_REF, content)
+      say "Updated #{PLAYWRIGHT_CLI_REF}"
+    end
+
+    def download_playwright_cli_references
+      files = JSON.parse(fetch(PLAYWRIGHT_CLI_REFERENCES_API))
+      FileUtils.mkdir_p(PLAYWRIGHT_CLI_REFERENCES_DIR)
+
+      files.each do |entry|
+        next unless entry["type"] == "file"
+
+        url = entry["download_url"]
+        path = File.join(PLAYWRIGHT_CLI_REFERENCES_DIR, entry["name"])
+        File.write(path, fetch(url, context: entry["name"]))
+        say "Updated #{path}"
+      end
+    end
+
+    def update_agent_browser_reference
+      raw_url = "https://raw.githubusercontent.com/#{AGENT_BROWSER_REPO}/refs/heads/main/#{AGENT_BROWSER_SKILL_PATH}"
+      content = strip_frontmatter(fetch(raw_url))
+        .gsub(/([\[\(])references\//, '\1references/agent-browser/')
+        .gsub(/([\[\(])templates\//, '\1../templates/agent-browser/')
+      FileUtils.mkdir_p(File.dirname(AGENT_BROWSER_REF))
+      File.write(AGENT_BROWSER_REF, content)
+      say "Updated #{AGENT_BROWSER_REF}"
+    end
+
+    def download_agent_browser_references
+      files = JSON.parse(fetch(AGENT_BROWSER_REFERENCES_API))
+      FileUtils.mkdir_p(AGENT_BROWSER_REFERENCES_DIR)
+
+      files.each do |entry|
+        next unless entry["type"] == "file"
+
+        path = File.join(AGENT_BROWSER_REFERENCES_DIR, entry["name"])
+        File.write(path, fetch(entry["download_url"], context: entry["name"]))
+        say "Updated #{path}"
+      end
+    end
+
+    def download_agent_browser_templates
+      files = JSON.parse(fetch(AGENT_BROWSER_TEMPLATES_API))
+      FileUtils.mkdir_p(AGENT_BROWSER_TEMPLATES_DIR)
+
+      files.each do |entry|
+        next unless entry["type"] == "file"
+
+        path = File.join(AGENT_BROWSER_TEMPLATES_DIR, entry["name"])
+        File.write(path, fetch(entry["download_url"], context: entry["name"]))
+        say "Updated #{path}"
+      end
+    end
+
+    def download_chrome_devtools_reference
+      FileUtils.mkdir_p(File.dirname(CHROME_DEVTOOLS_REF))
+      File.write(CHROME_DEVTOOLS_REF, fetch(CHROME_DEVTOOLS_REF_URL, context: "chrome-devtools tool-reference"))
+      say "Updated #{CHROME_DEVTOOLS_REF}"
+    end
+
+    def download_anthropics_skill_creator
+      download_github_dir(ANTHROPICS_SKILL_CREATOR_REPO, ANTHROPICS_SKILL_CREATOR_PATH, ANTHROPICS_SKILL_CREATOR_DIR)
+    end
+
+    def download_github_dir(repo, path, local_dir)
+      api_url = "https://api.github.com/repos/#{repo}/contents/#{path}"
+      entries = JSON.parse(fetch(api_url))
+      FileUtils.mkdir_p(local_dir)
+
+      entries.each do |entry|
+        if entry["type"] == "file"
+          file_path = File.join(local_dir, entry["name"])
+          File.write(file_path, fetch(entry["download_url"], context: entry["name"]))
+          say "Updated #{file_path}"
+        elsif entry["type"] == "dir"
+          sub_path = "#{path}/#{entry["name"]}"
+          sub_local = File.join(local_dir, entry["name"])
+          download_github_dir(repo, sub_path, sub_local)
+        end
+      end
+    end
+end
+
+Weekly.start(ARGV)
