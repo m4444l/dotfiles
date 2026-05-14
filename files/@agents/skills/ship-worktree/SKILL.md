@@ -19,6 +19,7 @@ Do the following:
 
 - If the user passed a commit message as an argument, stage everything and combine all changes into a single commit using that message.
 - Otherwise, group related changes into logical commits - do not lump unrelated changes together in one commit. Write commit messages using the "Conventional Commits" format.
+- Before staging, delete any screenshots that were added during development and are not meant to ship.
 
 Before staging or committing, compare the worktree with what you expected from the earlier work in this thread. If a change you made earlier has been reverted, further changed, or differs from what you expected in any other way, stop. Do not automatically apply the change again and do not "fix it back" while shipping. Tell the user:
 
