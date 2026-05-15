@@ -25,8 +25,6 @@ Only use Chrome DevTools MCP if:
 
 For detailed instructions, read [references/agent-browser.md](references/agent-browser.md).
 
-Run `agent-browser --help` to understand available commands, options, and usage.
-
 ## playwright-cli
 
 For detailed instructions, read [references/playwright-cli.md](references/playwright-cli.md) and the reference documents in [references/playwright-cli/](references/playwright-cli/).

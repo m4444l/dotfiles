@@ -19,10 +19,6 @@ PLAYWRIGHT_CLI_REFERENCES_DIR = "files/@agents/skills/browser-automation/referen
 AGENT_BROWSER_REPO = "vercel-labs/agent-browser"
 AGENT_BROWSER_SKILL_PATH = "skills/agent-browser/SKILL.md"
 AGENT_BROWSER_REF = "files/@agents/skills/browser-automation/references/agent-browser.md"
-AGENT_BROWSER_REFERENCES_API = "https://api.github.com/repos/vercel-labs/agent-browser/contents/skills/agent-browser/references"
-AGENT_BROWSER_REFERENCES_DIR = "files/@agents/skills/browser-automation/references/agent-browser"
-AGENT_BROWSER_TEMPLATES_API = "https://api.github.com/repos/vercel-labs/agent-browser/contents/skills/agent-browser/templates"
-AGENT_BROWSER_TEMPLATES_DIR = "files/@agents/skills/browser-automation/templates/agent-browser"
 
 CHROME_DEVTOOLS_REF_URL = "https://raw.githubusercontent.com/ChromeDevTools/chrome-devtools-mcp/refs/heads/main/docs/tool-reference.md"
 CHROME_DEVTOOLS_REF = "files/@agents/skills/browser-automation/references/chrome-devtools.md"
@@ -30,6 +26,10 @@ CHROME_DEVTOOLS_REF = "files/@agents/skills/browser-automation/references/chrome
 ANTHROPICS_SKILL_CREATOR_REPO = "anthropics/skills"
 ANTHROPICS_SKILL_CREATOR_PATH = "skills/skill-creator"
 ANTHROPICS_SKILL_CREATOR_DIR = "files/@agents/skills/skill-creator"
+
+MATT_POCOCK_GRILL_WITH_DOCS_REPO = "mattpocock/skills"
+MATT_POCOCK_GRILL_WITH_DOCS_PATH = "skills/engineering/grill-with-docs"
+MATT_POCOCK_GRILL_WITH_DOCS_DIR = "files/@agents/skills/grill-with-docs"
 
 class Weekly < Thor
   include Thor::Actions
@@ -46,10 +46,9 @@ class Weekly < Thor
       ["Playwright CLI skill reference", :update_playwright_cli_reference],
       ["Playwright CLI references", :download_playwright_cli_references],
       ["Agent Browser skill reference", :update_agent_browser_reference],
-      ["Agent Browser references", :download_agent_browser_references],
-      ["Agent Browser templates", :download_agent_browser_templates],
       ["Chrome DevTools reference", :download_chrome_devtools_reference],
       ["Anthropic skill creator", :download_anthropics_skill_creator],
+      ["Matt Pocock grill-with-docs", :download_matt_pocock_grill_with_docs],
     ]
 
     failures = []
@@ -131,32 +130,6 @@ class Weekly < Thor
       say "Updated #{AGENT_BROWSER_REF}"
     end
 
-    def download_agent_browser_references
-      files = JSON.parse(fetch(AGENT_BROWSER_REFERENCES_API))
-      FileUtils.mkdir_p(AGENT_BROWSER_REFERENCES_DIR)
-
-      files.each do |entry|
-        next unless entry["type"] == "file"
-
-        path = File.join(AGENT_BROWSER_REFERENCES_DIR, entry["name"])
-        File.write(path, fetch(entry["download_url"], context: entry["name"]))
-        say "Updated #{path}"
-      end
-    end
-
-    def download_agent_browser_templates
-      files = JSON.parse(fetch(AGENT_BROWSER_TEMPLATES_API))
-      FileUtils.mkdir_p(AGENT_BROWSER_TEMPLATES_DIR)
-
-      files.each do |entry|
-        next unless entry["type"] == "file"
-
-        path = File.join(AGENT_BROWSER_TEMPLATES_DIR, entry["name"])
-        File.write(path, fetch(entry["download_url"], context: entry["name"]))
-        say "Updated #{path}"
-      end
-    end
-
     def download_chrome_devtools_reference
       FileUtils.mkdir_p(File.dirname(CHROME_DEVTOOLS_REF))
       File.write(CHROME_DEVTOOLS_REF, fetch(CHROME_DEVTOOLS_REF_URL, context: "chrome-devtools tool-reference"))
@@ -165,6 +138,14 @@ class Weekly < Thor
 
     def download_anthropics_skill_creator
       download_github_dir(ANTHROPICS_SKILL_CREATOR_REPO, ANTHROPICS_SKILL_CREATOR_PATH, ANTHROPICS_SKILL_CREATOR_DIR)
+    end
+
+    def download_matt_pocock_grill_with_docs
+      download_github_dir(
+        MATT_POCOCK_GRILL_WITH_DOCS_REPO,
+        MATT_POCOCK_GRILL_WITH_DOCS_PATH,
+        MATT_POCOCK_GRILL_WITH_DOCS_DIR
+      )
     end
 
     def download_github_dir(repo, path, local_dir)
