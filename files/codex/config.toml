@@ -12,9 +12,6 @@ multi_agent = true
 [plugins."github@openai-curated"]
 enabled = true
 
-[plugins."browser-use@openai-bundled"]
-enabled = true
-
 [plugins."documents@openai-primary-runtime"]
 enabled = true
 
@@ -22,6 +19,9 @@ enabled = true
 enabled = true
 
 [plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
 enabled = true
 
 [projects."/Users/manuel/code/own/baseline"]
@@ -54,16 +54,22 @@ trust_level = "trusted"
 [projects."/Users/manuel/code/own/dotfiles"]
 trust_level = "trusted"
 
+[projects."/Users/manuel/code/own/fhpeople"]
+trust_level = "trusted"
+
+[projects."/Users/manuel/Documents/Codex/2026-05-15/what-are-the-most-popular-static"]
+trust_level = "trusted"
+
 [notice]
 hide_full_access_warning = true
 
 [marketplaces.openai-bundled]
-last_updated = "2026-05-09T16:45:20Z"
+last_updated = "2026-05-15T20:38:03Z"
 source_type = "local"
 source = "/Users/manuel/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-04-27T16:44:00Z"
+last_updated = "2026-05-15T20:43:59Z"
 source_type = "local"
 source = "/Users/manuel/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
