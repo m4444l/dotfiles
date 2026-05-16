@@ -74,7 +74,8 @@ via the package manager implied by the lockfile.
 
 ### Tests and CI
 
-Rails apps: always use `bin/ci` for tests and CI checks.
+Rails apps: always use `bin/ci` for tests and CI checks. Pass
+`--no-system-specs` to skip system specs (e.g. `bin/ci --no-system-specs`).
 
 Use another command only when instructed, or when explicitly running only tests
 without other CI tools.
